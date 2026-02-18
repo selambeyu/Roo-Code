@@ -59,6 +59,10 @@ vi.mock("../sections/modes", () => ({
 	getModesSection: vi.fn().mockImplementation(async () => `====\n\nMODES\n\n- Test modes section`),
 }))
 
+vi.mock("../sections/orchestration-handshake", () => ({
+	getOrchestrationHandshakeSection: vi.fn().mockResolvedValue(""),
+}))
+
 // Mock the custom instructions
 vi.mock("../sections/custom-instructions", () => {
 	const addCustomInstructions = vi.fn()
