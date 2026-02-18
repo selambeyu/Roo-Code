@@ -18,6 +18,7 @@ import {
 	getObjectiveSection,
 	getSharedToolUseSection,
 	getToolUseGuidelinesSection,
+	getOrchestrationHandshakeSection,
 	getCapabilitiesSection,
 	getModesSection,
 	addCustomInstructions,
@@ -74,9 +75,10 @@ async function generatePrompt(
 	// Tool calling is native-only.
 	const effectiveProtocol = "native"
 
-	const [modesSection, skillsSection] = await Promise.all([
+	const [modesSection, skillsSection, orchestrationHandshakeSection] = await Promise.all([
 		getModesSection(context),
 		getSkillsSection(skillsManager, mode as string),
+		getOrchestrationHandshakeSection(cwd),
 	])
 
 	// Tools catalog is not included in the system prompt.
@@ -89,6 +91,8 @@ ${markdownFormattingSection()}
 ${getSharedToolUseSection()}${toolsCatalog}
 
 	${getToolUseGuidelinesSection()}
+
+${orchestrationHandshakeSection}
 
 ${getCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined)}
 
