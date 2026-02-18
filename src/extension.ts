@@ -39,6 +39,7 @@ import { MdmService } from "./services/mdm/MdmService"
 import { migrateSettings } from "./utils/migrateSettings"
 import { autoImportSettings } from "./utils/autoImportSettings"
 import { API } from "./extension/api"
+import { ensureOrchestrationSidecar } from "./hooks/orchestrationBootstrap"
 
 import {
 	handleUri,
@@ -167,6 +168,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 
 	const contextProxy = await ContextProxy.getInstance(context)
+
+	// Ensure .orchestration/ sidecar exists (intent-governed orchestration).
+	await ensureOrchestrationSidecar()
 
 	// Initialize code index managers for all workspace folders.
 	const codeIndexManagers: CodeIndexManager[] = []

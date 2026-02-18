@@ -1,6 +1,7 @@
 import type { HookContext } from "./types"
 import { IntentGovernanceError } from "./types"
 import { getActiveIntent } from "./activeIntentState"
+import { readActiveIntentsYaml, findIntentById } from "./selectActiveIntent"
 
 /** Tool names that modify files and require an active intent (intent handshake). */
 const WRITE_TOOL_NAMES = new Set([
@@ -67,10 +68,11 @@ function getWriteTargetPath(context: HookContext): string | undefined {
 
 /**
  * Pre-hooks run before a tool is executed.
- * For write operations: enforces intent handshake (no write without active intent) and
- * scope guard (target path must match intent's owned_scope). Does not crash the extension.
+ * For write operations: enforces intent handshake (no write without active intent),
+ * validates active intent against .orchestration/active_intents.yaml (YAML-fed hook logic),
+ * and scope guard (target path must match intent's owned_scope). Does not crash the extension.
  *
- * Fail-closed: no intent → no write; invalid scope → no write. Never allow silent execution.
+ * Fail-closed: no intent → no write; intent not in YAML → no write; invalid scope → no write.
  */
 export async function runPreHooks(_toolCall: unknown, context: HookContext): Promise<void> {
 	const toolName = context.toolName
@@ -84,6 +86,17 @@ export async function runPreHooks(_toolCall: unknown, context: HookContext): Pro
 		const structuredError = `<error blocked="intent_governance">${NO_INTENT_MESSAGE}</error>`
 		context.pushToolResult?.(structuredError)
 		throw new IntentGovernanceError(NO_INTENT_MESSAGE)
+	}
+
+	// Feed hook logic from active_intents.yaml: validate that current intent exists in the file
+	const intents = await readActiveIntentsYaml(context.cwd)
+	const resolved = findIntentById(intents, active.id)
+	if (!resolved) {
+		const structuredError = `<error blocked="intent_governance">Orchestration: Active intent "${active.id}" is not in .orchestration/active_intents.yaml. Call select_active_intent with a valid intent id from that file.</error>`
+		context.pushToolResult?.(structuredError)
+		throw new IntentGovernanceError(
+			`Active intent "${active.id}" is not in .orchestration/active_intents.yaml. Call select_active_intent with a valid intent id.`,
+		)
 	}
 
 	const ownedScope = active.scope ?? active.owned_scope ?? ""

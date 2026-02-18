@@ -1,0 +1,15 @@
+# Active intents for intent-governed orchestration
+# The model MUST call select_active_intent with one of these ids before making code changes.
+# Each intent can have: id, constraints, scope (or owned_scope)
+
+- id: default
+  constraints: "General edits within the project. Follow existing patterns and tests."
+  scope: ""
+
+- id: docs
+  constraints: "Only update documentation, README, and comments. No code behavior changes."
+  scope: "docs/"
+
+- id: src
+  constraints: "Only change source code under src/. Tests and config unchanged unless specified."
+  scope: "src/"
